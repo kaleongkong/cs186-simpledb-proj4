@@ -59,10 +59,14 @@ public class BufferPool {
     	if (!pages.containsKey(pid)){
     		DbFile dbfile = Database.getCatalog().getDbFile(pid.getTableId());
         	p = dbfile.readPage(pid);
-        	if(pages.size()>=numPages){
+        	if(pages.size()==numPages){
         		evictPage();
         	}
     		pages.put(pid, p);
+    		//System.out.println("Bufferpool getPage: "+p.getId().equals(pid));
+    		//System.out.println("pages.get(pid).getId(): "+ pages.get(pid).getId().pageNumber());
+    		//System.out.println("pid: "+ pid.pageNumber());
+    		//System.out.println("");
     	}else{
         	p = pages.get(pid);
     	}
@@ -180,7 +184,15 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for proj1
-    	
+    	Set<PageId> pageids = pages.keySet();
+    	Iterator<PageId> pagesitr = pageids.iterator();
+    	while(pagesitr.hasNext()){
+    		try {
+				flushPage(pagesitr.next());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
 
     }
 
@@ -192,15 +204,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
 	// not necessary for proj1
-    	Set<PageId> pageids = pages.keySet();
-    	Iterator<PageId> pagesitr = pageids.iterator();
-    	while(pagesitr.hasNext()){
-    		try {
-				flushPage(pagesitr.next());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-    	}
+    	
     }
 
     /**

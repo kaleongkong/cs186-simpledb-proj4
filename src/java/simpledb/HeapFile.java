@@ -70,13 +70,13 @@ public class HeapFile implements DbFile {
     	int offset = pid.pageNumber()*BufferPool.PAGE_SIZE;
     	int page_size = BufferPool.PAGE_SIZE;
     	byte[] buffer = new byte[page_size];
-    	HeapPageId hpid = new HeapPageId(this.getId(), offset);
+    	//HeapPageId hpid = new HeapPageId(this.getId(), offset);
     	Page p;
     	try{
     		RandomAccessFile raf = new RandomAccessFile(file, "r");
     		raf.seek(offset);
     		raf.read(buffer, 0, page_size);
-    		p = new HeapPage(hpid, buffer);
+    		p = new HeapPage((HeapPageId)pid, buffer);
     		raf.close();
     		return p;
     	} catch (Exception e){
@@ -89,6 +89,7 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for proj1
+    	
     	int offset = page.getId().pageNumber()*BufferPool.PAGE_SIZE;
     	int page_size = BufferPool.PAGE_SIZE;
     	byte[] buffer = new byte[page_size];

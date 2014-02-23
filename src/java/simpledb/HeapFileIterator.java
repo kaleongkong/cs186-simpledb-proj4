@@ -38,6 +38,7 @@ public class HeapFileIterator implements DbFileIterator {
 			return true;
 		}
 		if(page_num<f.numPages()-1){
+			//System.out.println("HeapFileIterator tuples page_num<f.numPages()-1 is true");
 			return true;
 		}
 		return false;

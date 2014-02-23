@@ -16,6 +16,7 @@ public class HeapPageId implements PageId {
         // some code goes here
     	table_id = tableId;
     	pg_no = pgNo;
+    	//System.out.println("HeapPageId constructor page_num: "+pg_no);
     }
 
     /** @return the table associated with this PageId */
@@ -30,6 +31,7 @@ public class HeapPageId implements PageId {
      */
     public int pageNumber() {
         // some code goes here
+    	//System.out.println("HeapPageId pageNumber() page_num: "+pg_no);
         return pg_no;
     }
 
@@ -41,7 +43,8 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         // some code goes here
-    	return (int) (table_id*(Math.log10((double)pg_no)+1)+pg_no);
+    	int hash = (table_id<<16)+pg_no;
+    	return hash;
     }
 
     /**
