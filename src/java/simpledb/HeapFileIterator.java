@@ -22,9 +22,11 @@ public class HeapFileIterator implements DbFileIterator {
 	public void open() throws DbException, TransactionAbortedException {
 		// TODO Auto-generated method stub
 		hp = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(f.getId(), page_num), Permissions.READ_ONLY);
-		if(hp!=null){
-			tuples = hp.iterator();
-		}
+		tuples = hp.iterator();
+	}
+	public void readPage() throws DbException, TransactionAbortedException {
+		page_num++;
+		open();
 	}
 
 	@Override
@@ -37,9 +39,11 @@ public class HeapFileIterator implements DbFileIterator {
 		if(tuples.hasNext()){
 			return true;
 		}
-		if(page_num<f.numPages()-1){
-			//System.out.println("HeapFileIterator tuples page_num<f.numPages()-1 is true");
-			return true;
+		while(page_num<f.numPages()-1){
+			readPage();
+			if(tuples.hasNext()){
+				return true;
+			}
 		}
 		return false;
 	}
@@ -51,11 +55,6 @@ public class HeapFileIterator implements DbFileIterator {
 		if(!hasNext()){
 			throw new NoSuchElementException();
 		}
-		if(!tuples.hasNext()){
-			page_num++;
-			open();
-		}
-		
 		return tuples.next();
 	}
 

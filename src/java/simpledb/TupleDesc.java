@@ -216,7 +216,6 @@ public class TupleDesc implements Serializable {
     public boolean equals(Object o) {
         // some code goes here
 		if (o == null){
-			System.out.println("object is null");
 		    return false;
 		}
 		if(!(o instanceof TupleDesc)){

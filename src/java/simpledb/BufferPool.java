@@ -30,12 +30,14 @@ public class BufferPool {
     protected HashMap<PageId, Page> pages;
     protected HashMap<PageId, Integer> pageid_to_ru; 
     protected int ru;
+    int cachecount;
     public BufferPool(int numPages) {
         // some code goes here
     	this.numPages = numPages;
     	pages = new HashMap<PageId, Page>();
     	pageid_to_ru = new HashMap<PageId, Integer>(numPages); // least recent used is the page has least ru count
     	ru =0;
+    	cachecount=0;
     }
 
     /**
@@ -53,20 +55,17 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
+    
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
     		Page p;
     	if (!pages.containsKey(pid)){
     		DbFile dbfile = Database.getCatalog().getDbFile(pid.getTableId());
         	p = dbfile.readPage(pid);
-        	if(pages.size()==numPages){
+        	if(pages.size()>=numPages){
         		evictPage();
         	}
     		pages.put(pid, p);
-    		//System.out.println("Bufferpool getPage: "+p.getId().equals(pid));
-    		//System.out.println("pages.get(pid).getId(): "+ pages.get(pid).getId().pageNumber());
-    		//System.out.println("pid: "+ pid.pageNumber());
-    		//System.out.println("");
     	}else{
         	p = pages.get(pid);
     	}
@@ -245,11 +244,11 @@ public class BufferPool {
     	PageId lrupageid = null;
     	int lru = Integer.MAX_VALUE;
     	while(pageiditr.hasNext()){
-    		PageId current = pageiditr.next();
-    		int current_ru = pageid_to_ru.get(current);
-    		if(current_ru < lru){
-    			lru = current_ru;
-    			lrupageid = current;
+    		PageId next = pageiditr.next();
+    		int next_ru = pageid_to_ru.get(next);
+    		if(next_ru < lru){
+    			lru = next_ru;
+    			lrupageid = next;
     		}
     	}
     	try {
