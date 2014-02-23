@@ -37,12 +37,42 @@ public class Aggregate extends Operator {
     protected TupleDesc td;
     protected Aggregator aggr;
     protected DbIterator aggritr;
+    protected Type gtype;
+    protected Type atype;
     public Aggregate(DbIterator child, int afield, int gfield, Aggregator.Op aop) {
 	// some code goes here
     	this.child = child;
     	this.afield = afield;
     	this.gfield = gfield;
     	this.aop = aop;
+    	Type[]types = null;
+    	String[] names = null;
+    	gtype = null;
+    	gbfieldtype = null;
+    	//System.out.println(child.getTupleDesc());
+    	try {
+			child.open();
+		} catch (DbException | TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	atype = child.getTupleDesc().getFieldType(afield);
+    	if(gfield!= Aggregator.NO_GROUPING){
+    		gtype = child.getTupleDesc().getFieldType(gfield);
+        	types = new Type[2];
+        	types[0] = gtype;
+        	types[1] = atype;
+        	names = new String[2];
+        	names[0] = this.groupFieldName();
+        	names[1] =this.aggregateFieldName();
+        	gbfieldtype = atype;
+    	}else{
+    		types = new Type[1];
+    		types[0] = atype;
+    		names = new String[1];
+    		names[0] = aggregateFieldName();
+    	}
+    	td = new TupleDesc(types, names);
     }
 
     /**
@@ -102,37 +132,18 @@ public class Aggregate extends Operator {
 	// some code goes here
     	super.open();
     	child.open();
-    	Type[]types = null;
-    	String[] names = null;
-    	Type gtype = null;
-    	gbfieldtype = null;
-    	Type atype = child.getTupleDesc().getFieldType(afield);
-    	if(gfield!= Aggregator.NO_GROUPING){
-    		gtype = child.getTupleDesc().getFieldType(gfield);
-        	types = new Type[2];
-        	types[0] = gtype;
-        	types[1] = atype;
-        	names = new String[2];
-        	names[0] = this.groupFieldName();
-        	names[1] =this.aggregateFieldName();
-        	gbfieldtype = atype;
-    	}else{
-    		types = new Type[1];
-    		types[0] = atype;
-    		names = new String[1];
-    		names[0] = aggregateFieldName();
-    	}
     	if( atype == Type.INT_TYPE){
     		aggr = new IntegerAggregator(gfield, gtype,afield,aop);
     	}else if (atype ==Type.STRING_TYPE){
     		aggr = new StringAggregator(gfield, gtype,afield,aop);
     	}
+    	
     	while(child.hasNext()){
 			aggr.mergeTupleIntoGroup(child.next());
 		}
     	aggritr = aggr.iterator();
     	aggritr.open();
-    	td = new TupleDesc(types, names);
+    	
     }
 
     /**

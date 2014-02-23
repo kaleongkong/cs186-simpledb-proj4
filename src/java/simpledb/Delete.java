@@ -23,12 +23,22 @@ public class Delete extends Operator {
     protected TransactionId t;
     protected DbIterator child;
     protected TupleDesc td;
+    protected boolean fetched;
     protected int count;
     public Delete(TransactionId t, DbIterator child) {
         // some code goes here
     	Type[] types = new Type[1];
 		types[0] = Type.INT_TYPE;
+		this.child = child;
+    	try {
+			child.open();
+		} catch (DbException e) {
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
+		}
 		this.td = new TupleDesc(types);
+		this.fetched = false;
     }
 
     public TupleDesc getTupleDesc() {
@@ -39,7 +49,6 @@ public class Delete extends Operator {
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
     	super.open();
-    	child.open();
     	count=0;
     }
 
@@ -53,6 +62,7 @@ public class Delete extends Operator {
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
     	close();
+    	child.rewind();
     	open();
     }
 
@@ -67,7 +77,7 @@ public class Delete extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-    	if(!child.hasNext()){
+    	if(fetched){
     		return null;
     	}
     	while(child.hasNext()){
@@ -78,6 +88,7 @@ public class Delete extends Operator {
 			}
     		count++;
     	}
+    	fetched = true;
     	Tuple ct = new Tuple(td);
 		ct.setField(0, new IntField(count));
 		return ct;

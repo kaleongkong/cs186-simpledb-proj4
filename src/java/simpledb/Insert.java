@@ -31,17 +31,24 @@ public class Insert extends Operator {
     public int tableid;
     public HeapFile hpfile;
     public int count;
+    public boolean fetched;
     public Insert(TransactionId t,DbIterator child, int tableid)
             throws DbException {
         // some code goes here
     	HeapFile hpfile = (HeapFile)Database.getCatalog().getDbFile(tableid);
-    	TupleDesc childtd = child.getTupleDesc();
+    	this.child = child;
+    	try {
+			this.child.open();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
+		}
+    	TupleDesc childtd = this.child.getTupleDesc();
     	TupleDesc td = hpfile.getTupleDesc();
     	if(!td.equals(childtd)){
     		throw new DbException("Insert Operator: child tupledesc doesn't match table tupledesc");
     	}
     	this.t=t;
-    	this.child = child;
+    	this.fetched = false;
     	this.tableid = tableid;
     	this.hpfile = hpfile;
     	Type[] types = new Type[1];
@@ -89,7 +96,7 @@ public class Insert extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-    	if(!child.hasNext()){
+    	if(fetched){
     		return null;
     	}
     	while(child.hasNext()){
@@ -100,6 +107,7 @@ public class Insert extends Operator {
 			}
     		count++;
     	}
+    	fetched = true;
     	Tuple ct = new Tuple(td);
 		ct.setField(0, new IntField(count));
 		return ct;

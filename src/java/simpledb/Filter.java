@@ -25,6 +25,16 @@ public class Filter extends Operator {
         // some code goes here
     	this.p = p;
     	current = child;
+    	try {
+			current.open();
+		} catch (DbException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	td = current.getTupleDesc();
     }
 
     public Predicate getPredicate() {
@@ -40,18 +50,14 @@ public class Filter extends Operator {
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // some code goes here
-    	current.open();
+    	
     	//restDbIterators.add(current);
-    	td = current.getTupleDesc();
     	super.open();
     }
 
     public void close() {
         // some code goes here
     	current.close();
-    	current = null;
-    	p= null;
-    	td = null;
     	super.close();
     }
 
@@ -59,6 +65,7 @@ public class Filter extends Operator {
         // some code goes here
     	close();
     	open();
+    	current.rewind();
     }
 
     /**

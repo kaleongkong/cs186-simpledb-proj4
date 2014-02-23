@@ -219,21 +219,19 @@ public class TupleDesc implements Serializable {
 			System.out.println("object is null");
 		    return false;
 		}
-		try{
-		    TupleDesc t = (TupleDesc) o;
-		    if(this.numFields() != t.numFields()){
-		    	System.out.println("number of field doesn't match");
+		if(!(o instanceof TupleDesc)){
+			return false;
+		}
+		TupleDesc t = (TupleDesc) o;
+		if(this.numFields() != t.numFields()){
+			
+			return false;
+		}
+		for (int i =0; i<this.numFields(); i++){
+			if(!t.getFieldType(i).equals(this.getFieldType(i))){
+		    	
 		    	return false;
-		    }
-		    for (int i =0; i<this.numFields(); i++){
-		    	if(!t.getFieldType(i).equals(this.getFieldType(i))){
-		    		System.out.println("Type doesn't much!");
-		    		return false;
-		        }
-		    }
-		}catch(Exception e){
-			e.printStackTrace();
-		    return false;
+			}
 		}
 	
         return true;
