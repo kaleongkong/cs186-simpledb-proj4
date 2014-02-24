@@ -97,7 +97,9 @@ public class Tuple implements Serializable {
 	    if(i<field.length-1){
 		print = print + "\t";
 	    }
-	}
+	    
+        }
+    print=print+'\n';
 	return print;
 	
         //throw new UnsupportedOperationException("Implement this");

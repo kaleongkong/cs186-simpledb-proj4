@@ -367,8 +367,32 @@ public class HeapPage implements Page {
     		}
     		tuplelist.add(tuples[i]);
     	}
-        return tuplelist.iterator();
+        return new HeapPageIterator<Tuple>(tuplelist.iterator());
     }
+   public class HeapPageIterator<Tuple> implements Iterator<Tuple>{
+	Iterator<Tuple> i;
+	public HeapPageIterator(Iterator<Tuple> i){
+		this.i=i;
+	}
+	@Override
+	public boolean hasNext() {
+		// TODO Auto-generated method stub
+		return i.hasNext();
+	}
+
+	@Override
+	public Tuple next() {
+		// TODO Auto-generated method stub
+		return (Tuple)i.next();
+	}
+
+	@Override
+	public void remove() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+	   
+   }
 
 }
 
