@@ -42,6 +42,8 @@ public class SeqScan implements DbIterator {
     	this.tid = tid;
     	this.tableid = tableid;
     	this.tableAlias = tableAlias;
+    	dbf = Database.getCatalog().getDbFile(tableid);
+    	
     }
 
     /**
@@ -86,24 +88,7 @@ public class SeqScan implements DbIterator {
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
     	//System.out.println("SeqScan open");
-    	dbf = Database.getCatalog().getDbFile(tableid);
-    	//******
-    	/*int count = 0;
-    	DbFileIterator test = dbf.iterator(tid);
-    	test.open();
-    	while(test.hasNext()){
-    		test.next();
-    		count++;
-    	}
-    	System.out.println("SeqScan open iterator count: "+count);*/
-    	//******
-    	//if(dbf==null){
-    	//	System.out.println("SeqScan dbf: "+dbf);
-    	//}
     	tuples = dbf.iterator(tid);
-    	//if(tuples==null){
-    	//	System.out.println("SeqScan tuples: "+tuples);
-    	//}
     	tuples.open();
     }
 
@@ -163,7 +148,6 @@ public class SeqScan implements DbIterator {
     		tuples.close();
     	}
     	tuples = null;
-    	dbf= null;
     }
 
     public void rewind() throws DbException, NoSuchElementException,

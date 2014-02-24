@@ -486,13 +486,16 @@ public class LogicalPlan {
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
         String names[] = new String[]{ "field0", "field1", "field2" };
 
+        //Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE};
+        //String names[] = new String[]{ "field0", "field1"};
         TupleDesc td = new TupleDesc(types, names);
         TableStats ts;
         HashMap<String, TableStats> tableMap = new HashMap<String,TableStats>();
 
         // create the tables, associate them with the data files
         // and tell the catalog about the schema  the tables.
-        HeapFile table1 = new HeapFile(new File("some_data_file1.dat"), td);
+        HeapFile table1 = new HeapFile(new File("some_data_file1.dat"), td);//"some_data_file1.dat"
+        System.out.println("LogicalPlan td length: "+table1.getTupleDesc());
         Database.getCatalog().addTable(table1, "t1");
         ts = new TableStats(table1.getId(), 1);
         tableMap.put("t1", ts);

@@ -251,6 +251,9 @@ public class BufferPool {
     			lrupageid = next;
     		}
     	}
+    	if(lru>(Math.pow(2,30))){
+    		reducecount();
+    	}
     	try {
 			flushPage(lrupageid);
 		} catch (IOException e) {
@@ -259,6 +262,17 @@ public class BufferPool {
     	pages.remove(lrupageid);
     	pageid_to_ru.remove(lrupageid);
     	
+    }
+    
+    private void reducecount(){
+    	Set<PageId> pageids = pageid_to_ru.keySet();
+    	Iterator<PageId> pageiditr = pageids.iterator();
+    	while(pageiditr.hasNext()){
+    		PageId next = pageiditr.next();
+    		int next_ru = pageid_to_ru.get(next);
+    		next_ru = next_ru-(int)Math.pow(2,30);
+    		pageid_to_ru.put(next, ru);
+    	}
     }
     
     

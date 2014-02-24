@@ -72,6 +72,9 @@ public class TupleDesc implements Serializable {
 		}catch(Exception e){
 		    e.printStackTrace();
 		}
+		/*for (int i =0; i< td_items.length; i++){
+			System.out.println("TupleDesc.java : "+td_items[i]);
+	    }*/
     }
 
     /**
@@ -87,11 +90,11 @@ public class TupleDesc implements Serializable {
 		    int len = typeAr.length;
 		    td_items = new TDItem[len];
 		    for (int i =0; i< len; i++){
-			TDItem item= new TDItem(typeAr[i], null);
-			td_items[i] = item;
+		    	TDItem item= new TDItem(typeAr[i], null);
+		    	td_items[i] = item;
 		    }
 		}catch(Exception e){
-		    System.out.println(e);
+		    e.printStackTrace();
 		}
     }
 
@@ -254,13 +257,13 @@ public class TupleDesc implements Serializable {
      * @return String describing this descriptor.
      */
     public String toString() {
-	String result = "";
+    	String result = "";
         for(int i=0; i<this.numFields(); i++){
-	    result = this.getFieldType(i)+"("+this.getFieldName(i)+")";
-	    if(i<this.numFields()-1){
-		result = result+",";
-	    }
-	}
+        	result = result + this.getFieldType(i)+"("+this.getFieldName(i)+")";
+        	if(i<this.numFields()-1){
+        		result = result+",";
+        	}
+        }
         return result;
     }
 }

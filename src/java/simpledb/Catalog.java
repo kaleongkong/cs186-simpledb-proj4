@@ -56,6 +56,7 @@ public class Catalog {
         // some code goes here
     	if(name!=null){
     		//System.out.println("Catalog, file: "+file.getId());
+    		
 	    	TableInfo ti = new TableInfo(file, name, pkeyField);
 	    	if(nameToId.containsKey(name)){
 	    		int tempid = nameToId.get(name);
@@ -153,9 +154,10 @@ public class Catalog {
         String baseFolder=new File(catalogFile).getParent();
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(catalogFile)));
-            
+
             while ((line = br.readLine()) != null) {
                 //assume line is of the format name (field type, field type, ...)
+            	//System.out.println(line);
                 String name = line.substring(0, line.indexOf("(")).trim();
                 //System.out.println("TABLE NAME: " + name);
                 String fields = line.substring(line.indexOf("(") + 1, line.indexOf(")")).trim();
@@ -186,7 +188,8 @@ public class Catalog {
                 Type[] typeAr = types.toArray(new Type[0]);
                 String[] namesAr = names.toArray(new String[0]);
                 TupleDesc t = new TupleDesc(typeAr, namesAr);
-                HeapFile tabHf = new HeapFile(new File(baseFolder+"/"+name + ".dat"), t);
+                //HeapFile tabHf = new HeapFile(new File(baseFolder+"/"+name + ".dat"), t);
+                HeapFile tabHf = new HeapFile(new File(name + ".dat"), t);
                 addTable(tabHf,name,primaryKey);
                 System.out.println("Added table : " + name + " with schema " + t);
             }
