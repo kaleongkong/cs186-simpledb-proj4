@@ -104,10 +104,10 @@ public class Query implements Serializable {
             System.out.print("-");
         }
         System.out.println("");
-
         this.start();
         int cnt = 0;
         while (this.hasNext()) {
+        	
             Tuple tup = this.next();
             System.out.println(tup);
             cnt++;
