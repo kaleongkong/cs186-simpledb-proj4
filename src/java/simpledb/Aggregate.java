@@ -52,7 +52,7 @@ public class Aggregate extends Operator {
     	//System.out.println(child.getTupleDesc());
     	try {
 			child.open();
-		} catch (DbException | TransactionAbortedException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

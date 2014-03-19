@@ -326,8 +326,13 @@ public class HeapPage implements Page {
     		temp=temp/((int)Math.pow(2,reminder));
     	}*/
     	temp=temp>>remainder;
-    	temp=temp&0b11111111;
+    	/* due to java1.6
+    	temp=temp & 0b11111111;
 		if((temp|0b11111110) == 0b11111110){
+			return false;
+		}*/
+    	temp=temp & 255;
+		if((temp|254) == 254){
 			return false;
 		}
         return true;
@@ -343,7 +348,8 @@ public class HeapPage implements Page {
     	int byteoffset = i/8;
     	int bitoffset = i%8;
     	int temp = header[byteoffset];
-    	temp = temp& 0b11111111;
+    	//temp = temp& 0b11111111; due to java1.6 error
+    	temp = temp& 255;
     	if(value){
     		temp = temp| (1<<bitoffset);
     	}else{
