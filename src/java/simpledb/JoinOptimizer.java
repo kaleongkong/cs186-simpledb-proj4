@@ -238,8 +238,8 @@ public class JoinOptimizer {
 
         // some code goes here
         //Replace the following
-    	//System.out.println("hello");
     	Vector<LogicalJoinNode> j = joins;
+    	//System.out.println(joins);
     	Set<LogicalJoinNode> target = new HashSet<LogicalJoinNode>();
     	int size = j.size();
     	PlanCache optjoin = new PlanCache();
@@ -249,16 +249,16 @@ public class JoinOptimizer {
     		
     		Iterator<Set<LogicalJoinNode>> subsetsofjoinitr = subsetsofjoin.iterator();
     		while(subsetsofjoinitr.hasNext()){	//for s in {all length i subsets of j}
-    			//System.out.println("loop2");
+    			
     			Set<LogicalJoinNode> s = subsetsofjoinitr.next();
+    			//System.out.println(s.size());
     			if(s.size()==size){
     				target=s;
     			}
     			double bestCostSoFar = Double.MAX_VALUE;
     			int bestCardSoFar = Integer.MIN_VALUE;
-    			Vector<LogicalJoinNode> bestPlan = null;
+    			Vector<LogicalJoinNode> bestPlan = j;
     			for(LogicalJoinNode jointoremove: s){
-    				//System.out.println("loop3");
     				CostCard best = computeCostAndCardOfSubplan(stats, filterSelectivities, jointoremove, s, bestCostSoFar, optjoin);
     				if(best!=null){
     					bestCostSoFar = best.cost;
@@ -268,17 +268,10 @@ public class JoinOptimizer {
     			}
     			optjoin.addPlan(s, bestCostSoFar, bestCardSoFar, bestPlan);
     			
-    			//HashMap<Integer> scost = optjoin.bestCosts;
-    	    	//System.out.println("scost size : "+scost.size());
-    			
     		}
     	}
         Vector<LogicalJoinNode> output = optjoin.getOrder(target);
-        /*if(output==null){
-        	return j;
-        }else{
-        	return output;
-        }*/
+        
         return output;
     }
 

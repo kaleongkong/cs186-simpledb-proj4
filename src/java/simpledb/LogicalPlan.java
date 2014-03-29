@@ -289,7 +289,7 @@ public class LogicalPlan {
         HashMap<String,String> equivMap = new HashMap<String,String>();
         HashMap<String,Double> filterSelectivities = new HashMap<String, Double>();
         HashMap<String,TableStats> statsMap = new HashMap<String,TableStats>();
-
+        //System.out.println(tableIt.hasNext());//hihi
         while (tableIt.hasNext()) {
             LogicalScanNode table = tableIt.next();
             SeqScan ss = null;
@@ -298,15 +298,16 @@ public class LogicalPlan {
             } catch (NoSuchElementException e) {
                 throw new ParsingException("Unknown table " + table.t);
             }
-            
+            //System.out.println("ss: "+ss);//hihi
             subplanMap.put(table.alias,ss);
             String baseTableName = Database.getCatalog().getTableName(table.t);
             statsMap.put(baseTableName, baseTableStats.get(baseTableName));
             filterSelectivities.put(table.alias, 1.0);
 
         }
-
-        Iterator<LogicalFilterNode> filterIt = filters.iterator();        
+        
+        Iterator<LogicalFilterNode> filterIt = filters.iterator();   
+        //System.out.println(filterIt.hasNext());//hihi
         while (filterIt.hasNext()) {
             LogicalFilterNode lf = filterIt.next();
             DbIterator subplan = subplanMap.get(lf.tableAlias);
@@ -343,16 +344,18 @@ public class LogicalPlan {
 
             //s.addSelectivityFactor(estimateFilterSelectivity(lf,statsMap));
         }
-        
+        //System.out.println("logicalplan:"+subplanMap.entrySet());
         JoinOptimizer jo = new JoinOptimizer(this,joins);
 
         joins = jo.orderJoins(statsMap,filterSelectivities,explain);
-
+       
         Iterator<LogicalJoinNode> joinIt = joins.iterator();
+        //System.out.println("joinIt.hasNext():"+joinIt.hasNext());
         while (joinIt.hasNext()) {
             LogicalJoinNode lj = joinIt.next();
             DbIterator plan1;
             DbIterator plan2;
+            
             boolean isSubqueryJoin = lj instanceof LogicalSubplanJoinNode;
             String t1name, t2name;
 
@@ -384,7 +387,7 @@ public class LogicalPlan {
             DbIterator j;
             j = jo.instantiateJoin(lj,plan1,plan2);
             subplanMap.put(t1name, j);
-
+            //System.out.println("after put j logicalplan:"+subplanMap.entrySet());
             if (!isSubqueryJoin) {
                 subplanMap.remove(t2name);
                 equivMap.put(t2name,t1name);  //keep track of the fact that this new node contains both tables
@@ -399,13 +402,13 @@ public class LogicalPlan {
                     
                 // subplanMap.put(lj.t2, j);
             }
-            
+            //System.out.println("after remove t2name logicalplan:"+subplanMap.entrySet());
         }
 
         if (subplanMap.size() > 1) {
             throw new ParsingException("Query does not include join expressions joining all nodes!");
         }
-        
+        //System.out.println("logicalplan:"+subplanMap.entrySet());
         DbIterator node =  (DbIterator)(subplanMap.entrySet().iterator().next().getValue());
 
         //walk the select list, to determine order in which to project output fields

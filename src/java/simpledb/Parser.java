@@ -543,7 +543,7 @@ public class Parser {
                     }
                 } catch (Throwable a) {
                     // Whenever error happens, abort the current transaction
-                	// a.printStackTrace();
+                	a.printStackTrace();
                     if (curtrans != null) {
                         curtrans.abort();
                         System.out.println("Transaction "
