@@ -292,7 +292,7 @@ public class Parser {
 
                 Class<?> p = Operator.class;
                 Class<?> h = Map.class;
-
+                
                 java.lang.reflect.Method m = c.getMethod(
                         "updateOperatorCardinality", p, h, h);
 

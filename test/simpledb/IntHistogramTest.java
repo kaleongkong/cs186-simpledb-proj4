@@ -57,6 +57,7 @@ public class IntHistogramTest {
 		// And it really shouldn't be 0.
 		// Though, it could easily be as low as 0.02, seeing as that's
 		// the fraction of elements that actually are equal to -33.
+		//System.out.println(h.estimateSelectivity(Op.EQUALS, -33));
 		Assert.assertTrue(h.estimateSelectivity(Op.EQUALS, -33) > 0.001);
 	}
 	

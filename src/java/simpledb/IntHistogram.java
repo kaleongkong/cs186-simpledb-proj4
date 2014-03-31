@@ -25,12 +25,15 @@ public class IntHistogram {
 	protected int buckets;
 	protected int total;
 	public int[] histogram;
+	protected int width;
     public IntHistogram(int buckets, int min, int max) {
     	this.max = max;
     	this.min = min;
     	this.buckets = buckets;
     	this.total = 0;
     	this.histogram = new int[buckets];
+    	this.width = (int)Math.ceil((double)(max - min +1)/(double)buckets);
+    	
     }
 
     /**
@@ -62,6 +65,9 @@ public class IntHistogram {
      * @param v Value
      * @return Predicted selectivity of this particular operator and value
      */
+    public double equalpredicate(int v){
+    	return (double)(histogram[(int)position(v)]/(double)width)/(double)total;
+    }
     public double estimateSelectivity(Predicate.Op op, int v) {
 
     	// some code goes here
@@ -69,7 +75,7 @@ public class IntHistogram {
     		if(v<min || v>max){
     			return 0;
     		}
-    		return (double)histogram[(int)position(v)]/(double)total;
+    		return equalpredicate(v);
     	}else if(op.equals(op.GREATER_THAN)){
     		if(v<min){
     			return 1.0;
@@ -81,45 +87,47 @@ public class IntHistogram {
     		int totallargerthanv = 0;
     		double w_b = (double)(max-min+1)/(double)buckets;
     		double bright = w_b*(pos+1)+min;
-    		double samebucketportion = (bright-v)/w_b;
+    		double b_part = (bright-v)/w_b;
     		for(int i =pos+1; i<buckets; i++){
     			if(pos>=0 && pos<buckets){
     				totallargerthanv+= histogram[i];
     			}
     		}
-    		return (samebucketportion*histogram[pos]+(double)totallargerthanv)/(double)total;
+    		return (b_part*histogram[pos]+(double)totallargerthanv)/(double)total;
     	}else if(op.equals(op.GREATER_THAN_OR_EQ)){
-    		if(v<min){
+    		if(v<=min){
     			return 1.0;
     		}
     		if(v>max){
     			return 0;
     		}
-    		
     		int pos= (int) position(v);
     		int totallargerthanv = 0;
-    		for(int i =pos; i<buckets; i++){
+    		double w_b = (double)(max-min+1)/(double)buckets;
+    		double bright = w_b*(pos+1)+min;
+    		double b_part = (bright-v)/w_b;
+    		for(int i =pos+1; i<buckets; i++){
     			if(pos>=0 && pos<buckets){
     				totallargerthanv+= histogram[i];
     			}
     		}
-    		return ((double)totallargerthanv/(double)total);
+    		return equalpredicate(v)+((b_part*histogram[pos]+(double)totallargerthanv)/(double)total);
     	}else if(op.equals(op.LESS_THAN)){
     		if(v<=min){
     			return 0;
     		}
-    		if(v>=max){
+    		if(v>max){
     			return 1;
     		}
     		int pos = (int) position(v);
     		int totallessthanv = 0;
     		double w_b = (double)(max-min+1)/(double)buckets;
     		double bleft = w_b*(pos)+min;
-    		double samebucketportion = (v-bleft)/w_b;
+    		double b_part = (v-bleft)/w_b;
     		for(int i= 0; i< pos; i++){
     			totallessthanv+= histogram[i];
     		}
-    		return (samebucketportion*histogram[pos]+(double)totallessthanv)/(double)total;
+    		return (b_part*histogram[pos]+(double)totallessthanv)/(double)total;
     	}else if(op.equals(op.LESS_THAN_OR_EQ)){
     		if(v<min){
     			return 0;
@@ -129,22 +137,19 @@ public class IntHistogram {
     		}
     		int pos = (int) position(v);
     		int totallessthanv = 0;
-    		for(int i= 0; i<= pos; i++){
+    		double w_b = (double)(max-min+1)/(double)buckets;
+    		double bleft = w_b*(pos)+min;
+    		double b_part = (v-bleft)/w_b;
+    		for(int i= 0; i< pos; i++){
     			totallessthanv+= histogram[i];
     		}
-    		return (double)totallessthanv/(double)total;
+    		return equalpredicate(v)+((b_part*histogram[pos]+(double)totallessthanv)/(double)total);
     	}else if(op.equals(op.NOT_EQUALS)){
     		if(v<min || v>max){
     			return 1;
     		}
-    		int pos = (int) position(v);
-    		int totalnotequalv = 0;
-    		for(int i= 0; i< histogram.length; i++){
-    			if(i!=pos){
-    				totalnotequalv+= histogram[i];
-    			}
-    		}
-    		return (double)totalnotequalv/(double)total;
+    		
+    		return 1.0-equalpredicate(v);
     	}
         return -1.0;
     }

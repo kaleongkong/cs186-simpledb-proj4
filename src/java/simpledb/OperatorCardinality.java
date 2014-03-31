@@ -21,6 +21,7 @@ public class OperatorCardinality {
     public static boolean updateOperatorCardinality(Operator o,
             Map<String, Integer> tableAliasToId,
             Map<String, TableStats> tableStats) {
+    	
         if (o instanceof Filter) {
             return updateFilterCardinality((Filter) o, tableAliasToId,
                     tableStats);

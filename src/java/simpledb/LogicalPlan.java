@@ -498,7 +498,7 @@ public class LogicalPlan {
         // create the tables, associate them with the data files
         // and tell the catalog about the schema  the tables.
         HeapFile table1 = new HeapFile(new File("some_data_file1.dat"), td);//"some_data_file1.dat"
-        System.out.println("LogicalPlan td length: "+table1.getTupleDesc());
+        //System.out.println("LogicalPlan td length: "+table1.getTupleDesc());
         Database.getCatalog().addTable(table1, "t1");
         ts = new TableStats(table1.getId(), 1);
         tableMap.put("t1", ts);
