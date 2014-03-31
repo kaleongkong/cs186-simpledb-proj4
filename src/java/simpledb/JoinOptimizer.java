@@ -270,9 +270,8 @@ public class JoinOptimizer {
     			
     		}
     	}
-        Vector<LogicalJoinNode> output = optjoin.getOrder(target);
         
-        return output;
+        return optjoin.getOrder(target);
     }
 
     // ===================== Private Methods =================================

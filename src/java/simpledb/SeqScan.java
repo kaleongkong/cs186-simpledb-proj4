@@ -129,6 +129,9 @@ public class SeqScan implements DbIterator {
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // some code goes here
+    	if(tuples==null){
+    		return false;
+    	}
     	return tuples.hasNext();
     }
 
