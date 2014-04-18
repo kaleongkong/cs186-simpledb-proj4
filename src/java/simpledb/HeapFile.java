@@ -124,7 +124,7 @@ public class HeapFile implements DbFile {
     		
     		while(pageno<numPages()){
     			HeapPageId pidtobeinserted = new HeapPageId(tableid, pageno);
-    			page = (HeapPage)Database.getBufferPool().getPage(tid, pidtobeinserted, Permissions.READ_WRITE);
+    			page = (HeapPage)Database.getBufferPool().getPage(tid, pidtobeinserted, Permissions.READ_ONLY);
     			pages.add(page);
     			if(page.getNumEmptySlots()>0){
     				RecordId trid = new RecordId(pidtobeinserted, pageno);

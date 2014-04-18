@@ -1,7 +1,12 @@
 package simpledb;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -21,21 +26,23 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
     
-    protected int numPages;
+    protected volatile int numPages;
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    protected HashMap<PageId, Page> pages;
-    protected HashMap<PageId, Integer> pageid_to_ru; 
-    protected int ru;
-    int cachecount;
+    protected volatile Map<PageId, Page> pages;
+    protected volatile Map<PageId, Integer> pageid_to_ru; 
+    protected volatile int ru;
+    protected volatile LockManager lock_manager;
+    volatile int cachecount;
     public BufferPool(int numPages) {
         // some code goes here
     	this.numPages = numPages;
-    	pages = new HashMap<PageId, Page>();
-    	pageid_to_ru = new HashMap<PageId, Integer>(numPages); // least recent used is the page has least ru count
+    	pages = new ConcurrentHashMap<PageId, Page>();
+    	pageid_to_ru = new ConcurrentHashMap<PageId, Integer>(numPages); // least recent used is the page has least recent used count
+    	lock_manager = new LockManager();
     	ru =0;
     	cachecount=0;
     }
@@ -58,7 +65,17 @@ public class BufferPool {
     
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-    		Page p;
+    	boolean aquire = false;
+    	System.out.println(tid.toString());
+    	while(!aquire){
+    		aquire = lock_manager.checkAndAquireLock(tid,pid,perm);
+    		//System.out.println(aquire);
+    	}
+    	if(aquire){
+    		System.out.println("aquire is true");
+    	}
+    	
+    	Page p;
     	if (!pages.containsKey(pid)){
     		DbFile dbfile = Database.getCatalog().getDbFile(pid.getTableId());
         	p = dbfile.readPage(pid);
@@ -86,6 +103,7 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for proj1
+    	lock_manager.releasePage(tid, pid);
     }
 
     /**
@@ -102,7 +120,7 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for proj1
-        return false;
+        return lock_manager.holdsLock(tid, p);
     }
 
     /**
