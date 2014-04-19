@@ -66,14 +66,15 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
     	boolean aquire = false;
-    	System.out.println(tid.toString());
+    	//System.out.println(tid.toString());
     	while(!aquire){
     		aquire = lock_manager.checkAndAquireLock(tid,pid,perm);
     		//System.out.println(aquire);
     	}
+    	/*
     	if(aquire){
     		System.out.println("aquire is true");
-    	}
+    	}*/
     	
     	Page p;
     	if (!pages.containsKey(pid)){

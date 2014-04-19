@@ -5,13 +5,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LockManager {
-	//HashMap<TransactionId, HashSet<PageId>> shareLocksTidToPageidMap;
-	//HashMap<TransactionId, HashSet<PageId>> exclusiveLocksTidToPageidMap;
-	Map<PageId, HashSet<TransactionId>> shareLocksPageidToTidMap;
-	Map<PageId, TransactionId> exclusiveLocksPageidToTidMap;
+	volatile Map<PageId, HashSet<TransactionId>> shareLocksPageidToTidMap;
+	volatile Map<PageId, TransactionId> exclusiveLocksPageidToTidMap;
 	public LockManager(){
-		//shareLocksTidToPageidMap = new HashMap<TransactionId, HashSet<PageId>>();
-		//exclusiveLocksTidToPageidMap = new HashMap<TransactionId, HashSet<PageId>>();
 		shareLocksPageidToTidMap = new ConcurrentHashMap<PageId, HashSet<TransactionId>>();
 		exclusiveLocksPageidToTidMap = new ConcurrentHashMap<PageId, TransactionId>();
 	}
@@ -24,30 +20,48 @@ public class LockManager {
 			deleteShareLock(tid, pid);
 		}
 		if(holdsExclusiveLock(tid, pid)){
-			exclusiveLocksPageidToTidMap.put(pid, tid);
+			exclusiveLocksPageidToTidMap.remove(pid);
 		}
 	}
 	
 	public synchronized boolean checkAndAquireLock(TransactionId tid, PageId pid, Permissions perm){
 		if(perm.equals(Permissions.READ_ONLY)){
-			if(!holdsLock(tid, pid)){ //a page doesn't have any lock in that transaction
-				HashSet<TransactionId> tidset = new HashSet<TransactionId>();
-				if(shareLocksPageidToTidMap.containsKey(pid)){
-					tidset = shareLocksPageidToTidMap.get(pid);
-				}
-				tidset.add(tid);
-				shareLocksPageidToTidMap.put(pid, tidset);
+			//System.out.println("pid: "+pid);
+			if(holdsLock(tid,pid)){
+				return true;
+			}else if(exclusiveLocksPageidToTidMap.containsKey(pid)){ // this page has a exclusive lock in another transaction
+				return false;
+			}else if(shareLocksPageidToTidMap.containsKey(pid)){ // this page has share locks in other transaction(s)
+				HashSet<TransactionId> s = shareLocksPageidToTidMap.get(pid);
+				s.add(tid);
+				shareLocksPageidToTidMap.put(pid, s);
+				return true;
+			}else if(!shareLocksPageidToTidMap.containsKey(pid)){ // this page has no share locks at all
+				HashSet<TransactionId> s = new HashSet<TransactionId>();
+				s.add(tid);
+				shareLocksPageidToTidMap.put(pid, s);
 				return true;
 			}
+			System.out.println("checkandaquirelock read only no way to be here");
 			return false;
 		}else if(perm.equals(Permissions.READ_WRITE)){ //idea: check share list, share lock is found, delete it. check ex lock, ex lock not found, add it. 
-			if(holdsShareLock(tid, pid) && shareLocksPageidToTidMap.get(pid).size()==1){//has share lock, and there is only 1 transaction
-				deleteShareLock(tid, pid);
-			}
-			if(!holdsLock(tid, pid)){
+			if(holdsExclusiveLock(tid, pid)){
+				return true;
+			}else if(holdsShareLock(tid, pid)){
+				if(shareLocksPageidToTidMap.get(pid).size()==1){
+					deleteShareLock(tid,pid);
+					exclusiveLocksPageidToTidMap.put(pid,tid);
+					return true;
+				}else{
+					return false;
+				}
+			}else if(!exclusiveLocksPageidToTidMap.containsKey(pid) && !shareLocksPageidToTidMap.containsKey(pid)){
 				exclusiveLocksPageidToTidMap.put(pid, tid);
 				return true;
+			}else if(exclusiveLocksPageidToTidMap.containsKey(pid) ||shareLocksPageidToTidMap.containsKey(pid) ){
+				return false;
 			}
+			System.out.println("checkandaquirelock read write no way to be here");
 			return false;
 		}
 		System.out.println("LockManager.java perm is not read only and read write");
@@ -67,17 +81,23 @@ public class LockManager {
 	private boolean holdsShareLock(TransactionId tid, PageId pid){
 		if(!shareLocksPageidToTidMap.containsKey(pid)){
 			return false;
-		}else if (shareLocksPageidToTidMap.get(pid).contains(tid)){
+		}else if (!shareLocksPageidToTidMap.get(pid).contains(tid)){//page has share lock in another transaction but not this one
+			return false;
+		}else if(shareLocksPageidToTidMap.get(pid).contains(tid)){
 			return true;
 		}
+		System.out.println("holdsShareLock: no way to be here");
 		return false;
 	}
 	private boolean holdsExclusiveLock(TransactionId tid, PageId pid){
 		if(!exclusiveLocksPageidToTidMap.containsKey(pid)){
 			return false;
+		}else if(!exclusiveLocksPageidToTidMap.get(pid).equals(tid)){
+			return false;
 		}else if(exclusiveLocksPageidToTidMap.get(pid).equals(tid)){
 			return true;
 		}
+		System.out.println("holdsExclusiveLock: no way to be here");
 		return false;
 	}
 }
