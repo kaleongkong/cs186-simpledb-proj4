@@ -69,12 +69,7 @@ public class BufferPool {
     	//System.out.println(tid.toString());
     	while(!aquire){
     		aquire = lock_manager.checkAndAquireLock(tid,pid,perm);
-    		//System.out.println(aquire);
     	}
-    	/*
-    	if(aquire){
-    		System.out.println("aquire is true");
-    	}*/
     	
     	Page p;
     	if (!pages.containsKey(pid)){
@@ -115,6 +110,7 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for proj1
+    	transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -135,6 +131,23 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for proj1
+    	if(commit){
+    		for(PageId k:pages.keySet()){
+    			HeapPage page = (HeapPage)pages.get(k);
+    			if(page.isDirty()!=null && page.isDirty().equals(tid)){
+    				flushPage(k);
+    			}
+    			page.setBeforeImage();
+    		}
+    	}else{
+    		for(PageId k:pages.keySet()){
+    			HeapPage page = (HeapPage)pages.get(k);
+    			if(page.isDirty()!=null && page.isDirty().equals(tid)){ //page that is dirty and belongs to this transaction
+    				pages.put(k,page.getBeforeImage());
+    			}
+    		}
+    	}
+    	lock_manager.releaseAllLockOfATransaction(tid);
     }
 
     /**
@@ -265,10 +278,13 @@ public class BufferPool {
     	while(pageiditr.hasNext()){
     		PageId next = pageiditr.next();
     		int next_ru = pageid_to_ru.get(next);
-    		if(next_ru < lru){
+    		if(next_ru < lru && !((HeapPage)pages.get(next)).dirty){ //page selected cannot be dirty
     			lru = next_ru;
     			lrupageid = next;
     		}
+    	}
+    	if(lrupageid == null){ // this happens only when all pages are dirty
+    		throw new DbException("All pages are dirty");
     	}
     	if(lru>(Math.pow(2,30))){
     		reducecount();

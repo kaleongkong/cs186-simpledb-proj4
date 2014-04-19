@@ -23,6 +23,18 @@ public class LockManager {
 			exclusiveLocksPageidToTidMap.remove(pid);
 		}
 	}
+	public synchronized void releaseAllLockOfATransaction(TransactionId tid){
+		for(PageId k: shareLocksPageidToTidMap.keySet()){
+			if(shareLocksPageidToTidMap.get(k).contains(tid)){
+				deleteShareLock(tid,k);
+			}
+		}
+		for(PageId k: exclusiveLocksPageidToTidMap.keySet()){
+			if(exclusiveLocksPageidToTidMap.get(k).equals(tid)){
+				exclusiveLocksPageidToTidMap.remove(k);
+			}
+		}
+	}
 	
 	public synchronized boolean checkAndAquireLock(TransactionId tid, PageId pid, Permissions perm){
 		if(perm.equals(Permissions.READ_ONLY)){
