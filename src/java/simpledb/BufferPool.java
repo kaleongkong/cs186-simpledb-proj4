@@ -301,6 +301,7 @@ public class BufferPool {
     	PageId lrupageid = null;
     	int lru = Integer.MAX_VALUE;
     	//************************** new changes ***********
+    	/*
     	int dirtypagecount = 0;
     	for(PageId k:pages.keySet()){
     		if(((HeapPage)pages.get(k)).dirty){
@@ -311,7 +312,7 @@ public class BufferPool {
     	
     	if(dirtypagecount==numPages){
     		throw new DbException("All pages are dirty");
-    	}
+    	}*/
     	//**************************************************
     	while(pageiditr.hasNext()){
     		PageId next = pageiditr.next();
@@ -321,10 +322,11 @@ public class BufferPool {
     			lrupageid = next;
     		}
     	}
-    	/*System.out.println("expected to be here, lrupageid: "+lrupageid);
+    	/*System.out.println("expected to be here, lrupageid: "+lrupageid);*/
+    	
     	if(lrupageid == null){ // this happens only when all pages are dirty
     		throw new DbException("All pages are dirty");
-    	}*/
+    	}
     	if(lru>(Math.pow(2,30))){
     		reducecount();
     	}
