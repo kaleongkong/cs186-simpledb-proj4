@@ -117,7 +117,9 @@ public class TransactionTest extends SimpleDbTestBase {
                         Query q2 = new Query(delOp, tr.getId());
 
                         q2.start();
+                        //System.out.println("q2.next "+tr.getId());
                         q2.next();
+                        //System.out.println("q2.close "+tr.getId());
                         q2.close();
 
                         // set up a Set with a tuple that is one higher than the old one.
@@ -129,13 +131,14 @@ public class TransactionTest extends SimpleDbTestBase {
                         Insert insOp = new Insert(tr.getId(), ti, tableId);
                         Query q3 = new Query(insOp, tr.getId());
                         q3.start();
+                        //System.out.println("q3.next "+tr.getId());
                         q3.next();
                         q3.close();
-
+                        
                         tr.commit();
                         break;
                     } catch (TransactionAbortedException te) {
-                        //System.out.println("thread " + tr.getId() + " killed");
+                        //System.out.println("thread");
                         // give someone else a chance: abort the transaction
                         tr.transactionComplete(true);
                         latch.stillParticipating();
@@ -144,6 +147,7 @@ public class TransactionTest extends SimpleDbTestBase {
                 //System.out.println("thread " + id + " done");
             } catch (Exception e) {
                 // Store exception for the master thread to handle
+            	//System.out.println("another exception");
                 exception = e;
             }
             
@@ -212,7 +216,7 @@ public class TransactionTest extends SimpleDbTestBase {
     }
 
     @Test public void testTwoThreads()
-            throws IOException, DbException, TransactionAbortedException {
+            throws IOException, DbException, TransactionAbortedException {	
         validateTransactions(2);
     }
 
@@ -237,11 +241,14 @@ public class TransactionTest extends SimpleDbTestBase {
         t.start();
 
         // Insert a new row
+        //System.out.println("insertRow");
         EvictionTest.insertRow(f, t);
-
+        
         // Scanning the table must fail because it can't evict the dirty page
         try {
+        	//System.out.println("find Magic Tuples");
             EvictionTest.findMagicTuple(f, t);
+            //System.out.println("finished find Magic Tuples");
             fail("Expected scan to run out of available buffer pages");
         } catch (DbException e) {}
         t.commit();

@@ -101,7 +101,9 @@ public class Insert extends Operator {
     	}
     	while(child.hasNext()){
     		try {
+    			//System.out.println("____fetchNext num page in buffer pool: "+Database.getBufferPool().pages.size());
 				Database.getBufferPool().insertTuple(t, tableid, child.next());
+				
 			} catch (NoSuchElementException e){
 				e.printStackTrace();
     		}catch (IOException e) {

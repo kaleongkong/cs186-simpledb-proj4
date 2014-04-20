@@ -7,13 +7,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LockManager {
 	volatile Map<PageId, HashSet<TransactionId>> shareLocksPageidToTidMap;
 	volatile Map<PageId, TransactionId> exclusiveLocksPageidToTidMap;
+	//volatile Map<TransactionId>
+	
 	public LockManager(){
 		shareLocksPageidToTidMap = new ConcurrentHashMap<PageId, HashSet<TransactionId>>();
 		exclusiveLocksPageidToTidMap = new ConcurrentHashMap<PageId, TransactionId>();
 	}
+	
+	
+	
 	public boolean holdsLock(TransactionId tid, PageId pid) {
 		return holdsShareLock(tid,pid) || holdsExclusiveLock (tid,pid);
 	}
+	
+	
 	
 	public synchronized void releasePage(TransactionId tid, PageId pid){
 		if(holdsShareLock(tid, pid)){
@@ -23,6 +30,9 @@ public class LockManager {
 			exclusiveLocksPageidToTidMap.remove(pid);
 		}
 	}
+	
+	
+	
 	public synchronized void releaseAllLockOfATransaction(TransactionId tid){
 		for(PageId k: shareLocksPageidToTidMap.keySet()){
 			if(shareLocksPageidToTidMap.get(k).contains(tid)){
@@ -36,7 +46,10 @@ public class LockManager {
 		}
 	}
 	
+	
+	
 	public synchronized boolean checkAndAquireLock(TransactionId tid, PageId pid, Permissions perm){
+		
 		if(perm.equals(Permissions.READ_ONLY)){
 			//System.out.println("pid: "+pid);
 			if(holdsLock(tid,pid)){
@@ -44,11 +57,14 @@ public class LockManager {
 			}else if(exclusiveLocksPageidToTidMap.containsKey(pid)){ // this page has a exclusive lock in another transaction
 				return false;
 			}else if(shareLocksPageidToTidMap.containsKey(pid)){ // this page has share locks in other transaction(s)
+				//System.out.println("acquire share lock has other transaction");
 				HashSet<TransactionId> s = shareLocksPageidToTidMap.get(pid);
 				s.add(tid);
 				shareLocksPageidToTidMap.put(pid, s);
 				return true;
 			}else if(!shareLocksPageidToTidMap.containsKey(pid)){ // this page has no share locks at all
+				//System.out.println("acquire share lock no share locks at all");
+				//System.out.println("read tid:"+tid);
 				HashSet<TransactionId> s = new HashSet<TransactionId>();
 				s.add(tid);
 				shareLocksPageidToTidMap.put(pid, s);
@@ -56,29 +72,45 @@ public class LockManager {
 			}
 			System.out.println("checkandaquirelock read only no way to be here");
 			return false;
-		}else if(perm.equals(Permissions.READ_WRITE)){ //idea: check share list, share lock is found, delete it. check ex lock, ex lock not found, add it. 
+		}else if(perm.equals(Permissions.READ_WRITE)){ //idea: check share list, share lock is found, delete it. check ex lock, ex lock not found, add it.
+			
 			if(holdsExclusiveLock(tid, pid)){
+				//System.out.println("current page has an exclusive lock in the current transaction");
 				return true;
-			}else if(holdsShareLock(tid, pid)){
+				
+			}else if(holdsShareLock(tid, pid)){// current transaction holds share lock
 				if(shareLocksPageidToTidMap.get(pid).size()==1){
+					//System.out.println("current page has only one share lock in the current transaction, and we can promote it");
 					deleteShareLock(tid,pid);
 					exclusiveLocksPageidToTidMap.put(pid,tid);
 					return true;
 				}else{
+					//System.out.println("current page has more than one share lock in the current transaction");
 					return false;
 				}
+				
 			}else if(!exclusiveLocksPageidToTidMap.containsKey(pid) && !shareLocksPageidToTidMap.containsKey(pid)){
+				//System.out.println("current page has no lock, and we can add ex lock to it");
 				exclusiveLocksPageidToTidMap.put(pid, tid);
 				return true;
-			}else if(exclusiveLocksPageidToTidMap.containsKey(pid) ||shareLocksPageidToTidMap.containsKey(pid) ){
+				
+			}else if(exclusiveLocksPageidToTidMap.containsKey(pid)){
+				//System.out.println("current page has exclusive lock that is not in current transaction");
+				return false;
+			}else if(shareLocksPageidToTidMap.containsKey(pid)){
+				//System.out.println("current page has share locks that is not in current transaction");
+				//System.out.println("write tid:"+tid);
 				return false;
 			}
+			
 			System.out.println("checkandaquirelock read write no way to be here");
 			return false;
 		}
 		System.out.println("LockManager.java perm is not read only and read write");
 		return false;
 	}
+	
+	
 	
 	private synchronized void deleteShareLock(TransactionId tid, PageId pid){ //assume tid already in the list
 		HashSet<TransactionId>tidset = shareLocksPageidToTidMap.get(pid);
@@ -89,6 +121,8 @@ public class LockManager {
 			shareLocksPageidToTidMap.put(pid, tidset);
 		}
 	}
+	
+	
 	
 	private boolean holdsShareLock(TransactionId tid, PageId pid){
 		if(!shareLocksPageidToTidMap.containsKey(pid)){
@@ -101,6 +135,10 @@ public class LockManager {
 		System.out.println("holdsShareLock: no way to be here");
 		return false;
 	}
+	
+	
+	
+	
 	private boolean holdsExclusiveLock(TransactionId tid, PageId pid){
 		if(!exclusiveLocksPageidToTidMap.containsKey(pid)){
 			return false;

@@ -32,7 +32,7 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    protected volatile Map<PageId, Page> pages;
+    public volatile Map<PageId, Page> pages;
     protected volatile Map<PageId, Integer> pageid_to_ru; 
     protected volatile int ru;
     protected volatile LockManager lock_manager;
@@ -66,13 +66,23 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
     	boolean aquire = false;
-    	//System.out.println(tid.toString());
+    	
+    	double current = System.currentTimeMillis();
     	while(!aquire){
+    		if(System.currentTimeMillis()-current>100){
+    			throw new TransactionAbortedException();
+    		}
     		aquire = lock_manager.checkAndAquireLock(tid,pid,perm);
     	}
     	
     	Page p;
+    	//System.out.println("page id in buffer pool getPage: "+ pid);
+    	//System.out.println("numPages: "+numPages);
+    	//System.out.println("page: "+pages.get(pid));
+    	//System.out.println("num pages: "+pages.size());
+		//System.out.println("ru: "+pageid_to_ru.size());
     	if (!pages.containsKey(pid)){
+    		
     		DbFile dbfile = Database.getCatalog().getDbFile(pid.getTableId());
         	p = dbfile.readPage(pid);
         	if(pages.size()>=numPages){
@@ -169,13 +179,22 @@ public class BufferPool {
         // some code goes here
         // not necessary for proj1
     	try{
+    		//System.out.println("____________insert begin_____________");
     		DbFile dbfile = Database.getCatalog().getDbFile(tableId);
+    		//System.out.println("____________got db file_____________");
+    		//System.out.println("____________pages size before dbfile insert Tuple _____________: "+pages.size());
     		ArrayList<Page> pages= dbfile.insertTuple(tid, t);
+    		//System.out.println("____________pages size after dbfile insert Tuple _____________: "+pages.size());
     		Iterator<Page> pagesitr = pages.iterator();
+    		
     		while(pagesitr.hasNext()){
     			HeapPage hpage = (HeapPage)pagesitr.next();
+    			//System.out.println("mark Dirty??");
+    			//System.out.println("numPages: "+numPages);
+            	//System.out.println("num of pages: "+pages.size());
     			hpage.markDirty(true, tid);
     			this.pages.put(hpage.getId(), hpage);
+    			//System.out.println(((HeapPage)this.pages.get(hpage.getId())).dirty);
     		}
     	}catch (Exception e){
     		e.printStackTrace();
@@ -199,12 +218,13 @@ public class BufferPool {
         throws DbException, TransactionAbortedException {
         // some code goes here
         // not necessary for proj1
-    	try{
+    	//try{
     		DbFile dbfile = Database.getCatalog().getDbFile(t.getRecordId().getPageId().getTableId());
+    		//System.out.println(tid);
     		dbfile.deleteTuple(tid, t);
-    	}catch(Exception e){
-    		e.printStackTrace();
-    	}
+    	//}catch(Exception e){
+    		//e.printStackTrace();
+    	//}
     }
 
     /**
@@ -262,6 +282,11 @@ public class BufferPool {
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for proj1s
+    	for(PageId k: pages.keySet()){
+    		if(pages.get(k).isDirty()!=null &&pages.get(k).isDirty().equals(tid)){
+    			flushPage(k);
+    		}
+    	}
     }
 
     /**
@@ -275,6 +300,19 @@ public class BufferPool {
     	Iterator<PageId> pageiditr = pageids.iterator();
     	PageId lrupageid = null;
     	int lru = Integer.MAX_VALUE;
+    	//************************** new changes ***********
+    	int dirtypagecount = 0;
+    	for(PageId k:pages.keySet()){
+    		if(((HeapPage)pages.get(k)).dirty){
+    			dirtypagecount++;
+    		}
+    	}
+    	//System.out.println("inside evictPage dirtypage count: "+dirtypagecount+", numPages: "+numPages+", num pages: "+pages.size());
+    	
+    	if(dirtypagecount==numPages){
+    		throw new DbException("All pages are dirty");
+    	}
+    	//**************************************************
     	while(pageiditr.hasNext()){
     		PageId next = pageiditr.next();
     		int next_ru = pageid_to_ru.get(next);
@@ -283,9 +321,10 @@ public class BufferPool {
     			lrupageid = next;
     		}
     	}
+    	/*System.out.println("expected to be here, lrupageid: "+lrupageid);
     	if(lrupageid == null){ // this happens only when all pages are dirty
     		throw new DbException("All pages are dirty");
-    	}
+    	}*/
     	if(lru>(Math.pow(2,30))){
     		reducecount();
     	}

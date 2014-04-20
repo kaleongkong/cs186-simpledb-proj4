@@ -39,6 +39,7 @@ public class Delete extends Operator {
 		}
 		this.td = new TupleDesc(types);
 		this.fetched = false;
+		this.t = t;
     }
 
     public TupleDesc getTupleDesc() {
@@ -81,11 +82,11 @@ public class Delete extends Operator {
     		return null;
     	}
     	while(child.hasNext()){
-    		try {
+    		//try {
 				Database.getBufferPool().deleteTuple(t, child.next());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			//} catch (Exception e) {
+				//e.printStackTrace();
+			//}
     		count++;
     	}
     	fetched = true;

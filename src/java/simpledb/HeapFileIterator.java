@@ -22,6 +22,8 @@ public class HeapFileIterator implements DbFileIterator {
 	public void open() throws DbException, TransactionAbortedException {
 		// TODO Auto-generated method stub
 		hp = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(f.getId(), page_num), Permissions.READ_ONLY);
+		//System.out.println("inside heap page iterator");
+		//System.out.println("hp: "+hp.dirty);
 		tuples = hp.iterator();
 	}
 	public void readPage() throws DbException, TransactionAbortedException {

@@ -51,10 +51,15 @@ public class EvictionTest extends SimpleDbTestBase {
         // Insert the row
         Insert insert = new Insert(t.getId(), insertRow, f.getId());
         insert.open();
+        
+        
+        //System.out.println("after insert open in eviction test in insert row");
         Tuple result = insert.next();
+        
         assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, result.getTupleDesc());
         assertEquals(1, ((IntField)result.getField(0)).getValue());
         assertFalse(insert.hasNext());
+        //System.out.println("insert is about to be closed in eviction test in insert row");
         insert.close();
     }
 
@@ -64,10 +69,12 @@ public class EvictionTest extends SimpleDbTestBase {
         boolean found = false;
         ss.open();
         while (ss.hasNext()) {
+        	
             Tuple v = ss.next();
             int v0 = ((IntField)v.getField(0)).getValue();
             int v1 = ((IntField)v.getField(1)).getValue();
             if (v0 == -42 && v1 == -43) {
+            	//System.out.println("condition");
                 assertFalse(found);
                 found = true;
             }
