@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LockManager {
-	volatile Map<PageId, HashSet<TransactionId>> shareLocksPageidToTidMap;
-	volatile Map<PageId, TransactionId> exclusiveLocksPageidToTidMap;
+	Map<PageId, HashSet<TransactionId>> shareLocksPageidToTidMap;
+	Map<PageId, TransactionId> exclusiveLocksPageidToTidMap;
 	//volatile Map<TransactionId>
 	
 	public LockManager(){
@@ -57,14 +57,11 @@ public class LockManager {
 			}else if(exclusiveLocksPageidToTidMap.containsKey(pid)){ // this page has a exclusive lock in another transaction
 				return false;
 			}else if(shareLocksPageidToTidMap.containsKey(pid)){ // this page has share locks in other transaction(s)
-				//System.out.println("acquire share lock has other transaction");
 				HashSet<TransactionId> s = shareLocksPageidToTidMap.get(pid);
 				s.add(tid);
 				shareLocksPageidToTidMap.put(pid, s);
 				return true;
 			}else if(!shareLocksPageidToTidMap.containsKey(pid)){ // this page has no share locks at all
-				//System.out.println("acquire share lock no share locks at all");
-				//System.out.println("read tid:"+tid);
 				HashSet<TransactionId> s = new HashSet<TransactionId>();
 				s.add(tid);
 				shareLocksPageidToTidMap.put(pid, s);
@@ -75,7 +72,6 @@ public class LockManager {
 		}else if(perm.equals(Permissions.READ_WRITE)){ //idea: check share list, share lock is found, delete it. check ex lock, ex lock not found, add it.
 			
 			if(holdsExclusiveLock(tid, pid)){
-				//System.out.println("current page has an exclusive lock in the current transaction");
 				return true;
 				
 			}else if(holdsShareLock(tid, pid)){// current transaction holds share lock
@@ -99,7 +95,6 @@ public class LockManager {
 				return false;
 			}else if(shareLocksPageidToTidMap.containsKey(pid)){
 				//System.out.println("current page has share locks that is not in current transaction");
-				//System.out.println("write tid:"+tid);
 				return false;
 			}
 			

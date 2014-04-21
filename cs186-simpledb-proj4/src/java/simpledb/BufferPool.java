@@ -32,11 +32,11 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    public volatile Map<PageId, Page> pages;
-    protected volatile Map<PageId, Integer> pageid_to_ru; 
-    protected volatile int ru;
-    protected volatile LockManager lock_manager;
-    volatile int cachecount;
+    public Map<PageId, Page> pages;
+    protected Map<PageId, Integer> pageid_to_ru; 
+    protected int ru;
+    protected LockManager lock_manager;
+    int cachecount;
     public BufferPool(int numPages) {
         // some code goes here
     	this.numPages = numPages;
@@ -69,7 +69,7 @@ public class BufferPool {
     	
     	double current = System.currentTimeMillis();
     	while(!aquire){
-    		if(System.currentTimeMillis()-current>100){
+    		if(System.currentTimeMillis()-current>200){
     			throw new TransactionAbortedException();
     		}
     		aquire = lock_manager.checkAndAquireLock(tid,pid,perm);
@@ -300,20 +300,6 @@ public class BufferPool {
     	Iterator<PageId> pageiditr = pageids.iterator();
     	PageId lrupageid = null;
     	int lru = Integer.MAX_VALUE;
-    	//************************** new changes ***********
-    	/*
-    	int dirtypagecount = 0;
-    	for(PageId k:pages.keySet()){
-    		if(((HeapPage)pages.get(k)).dirty){
-    			dirtypagecount++;
-    		}
-    	}
-    	//System.out.println("inside evictPage dirtypage count: "+dirtypagecount+", numPages: "+numPages+", num pages: "+pages.size());
-    	
-    	if(dirtypagecount==numPages){
-    		throw new DbException("All pages are dirty");
-    	}*/
-    	//**************************************************
     	while(pageiditr.hasNext()){
     		PageId next = pageiditr.next();
     		int next_ru = pageid_to_ru.get(next);
