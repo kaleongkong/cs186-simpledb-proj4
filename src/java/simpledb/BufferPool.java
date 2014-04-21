@@ -69,7 +69,7 @@ public class BufferPool {
     	
     	double current = System.currentTimeMillis();
     	while(!aquire){
-    		if(System.currentTimeMillis()-current>200){
+    		if(System.currentTimeMillis()-current>100){
     			throw new TransactionAbortedException();
     		}
     		aquire = lock_manager.checkAndAquireLock(tid,pid,perm);
